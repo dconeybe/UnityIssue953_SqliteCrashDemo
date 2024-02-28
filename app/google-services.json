@@ -1,0 +1,24 @@
+{
+  "project_info": {
+    "project_number": "99999999999",
+    "firebase_url": "https://XXXXXXXXXXX.firebaseio.com",
+    "project_id": "XXXXXXXXXXX",
+    "storage_bucket": "XXXXXXXXXXX.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:99999999999:android:ffffffffffffffffffffff",
+        "android_client_info": {
+          "package_name": "com.google.dconeybe"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+        }
+      ]
+    }
+  ],
+  "configuration_version": "1"
+}
