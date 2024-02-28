@@ -22,7 +22,12 @@ class MainActivity : AppCompatActivity() {
     logMessage("Getting Firestore instance")
     FirebaseFirestore.setLoggingEnabled(true)
     Firebase.firestore.apply {
-      useEmulator("10.0.2.2", 8080)
+      if (binding.useFirestoreEmulator.isChecked) {
+        logMessage("Connecting to Firestore emulator")
+        useEmulator("10.0.2.2", 8080)
+      } else {
+        logMessage("Connecting to Firestore project: ${getString(R.string.project_id)}")
+      }
     }
   }
   private val collection: CollectionReference by lazy {
@@ -32,6 +37,7 @@ class MainActivity : AppCompatActivity() {
   private var snapshotListenerRegistration: ListenerRegistration? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
+    Log.i("SqliteCrashDemo", "MainActivity.onCreate() called")
     super.onCreate(savedInstanceState)
 
     mainHandler = Handler(Looper.getMainLooper())
@@ -39,25 +45,68 @@ class MainActivity : AppCompatActivity() {
     binding = ActivityMainBinding.inflate(layoutInflater)
     setContentView(binding.root)
 
+    loadSharedPreferences()
+
     binding.createDocument.setOnClickListener {
       createDocument()
     }
     binding.crash.setOnClickListener {
       logMessage(binding.crash.text.toString() + " Clicked")
-      mainHandler.post { thread(name="Crasher") {
-        CauseSegmentationFault()
-      } }
+      mainHandler.post {
+        thread(name = "Crasher") {
+          CauseSegmentationFault()
+        }
+      }
+    }
+    binding.exit.setOnClickListener {
+      logMessage(binding.exit.text.toString() + " Clicked")
+      mainHandler.post {
+        thread(name = "Crasher") {
+          finish()
+        }
+      }
     }
   }
 
   override fun onDestroy() {
+    Log.i("SqliteCrashDemo", "MainActivity.onDestroy() called")
     snapshotListenerRegistration?.remove()
     super.onDestroy()
   }
 
   override fun onStart() {
+    Log.i("SqliteCrashDemo", "MainActivity.onStart() called")
     super.onStart()
     registerSnapshotListener()
+  }
+
+  override fun onStop() {
+    Log.i("SqliteCrashDemo", "MainActivity.onStop() called")
+    super.onStop()
+  }
+
+  override fun onResume() {
+    Log.i("SqliteCrashDemo", "MainActivity.onResume() called")
+    super.onResume()
+  }
+
+  override fun onPause() {
+    Log.i("SqliteCrashDemo", "MainActivity.onPause() called")
+    storeSharedPreferences()
+    super.onPause()
+  }
+
+  private fun loadSharedPreferences() {
+    val useFirestoreEmulatorIsChecked =
+      getSharedPreferences("settings", MODE_PRIVATE).getBoolean("use_firestore_emulator", true)
+    binding.useFirestoreEmulator.isChecked = useFirestoreEmulatorIsChecked
+  }
+
+  private fun storeSharedPreferences() {
+    getSharedPreferences("settings", MODE_PRIVATE).edit().apply {
+      putBoolean("use_firestore_emulator", binding.useFirestoreEmulator.isChecked)
+      apply()
+    }
   }
 
   private fun logMessage(message: String) {
@@ -87,7 +136,7 @@ class MainActivity : AppCompatActivity() {
     snapshotListenerRegistration = collection.addSnapshotListener { value, error ->
       if (error != null) {
         logMessage("Snapshot listener got error: ${error}")
-      } else if (value != null){
+      } else if (value != null) {
         val documentsString = value.documents.map { it.id }.joinToString(", ")
         logMessage("Snapshot listener got ${value.size()} documents: $documentsString")
       } else {
